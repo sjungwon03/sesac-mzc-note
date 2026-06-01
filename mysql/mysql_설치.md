@@ -1,0 +1,124 @@
+# MySQL 설치 학습 노트
+
+## 1. MySQL 개요
+
+### 1.1 MySQL이란?
+
+- **개발사:** 미국 오라클(Oracle)사
+- **특징:** 관계형 DBMS (RDBMS)
+- **라이선스:** 오픈소스 기반 (무료 버전과 상용 버전 존재)
+
+### 1.2 버전 구성
+
+**상용 버전:**
+- Standard
+- Enterprise
+- Cluster CGE
+
+**무료 버전:**
+- Community (Enterprise와 큰 차이 없음)
+
+### 1.3 MariaDB
+
+MySQL의 수정 버전으로, 오라클 소유의 불확실한 MySQL 라이선스 문제를 해결하기 위해 만들어짐. MySQL과 동일한 소스코드를 사용하여 사용방법이 거의 동일함.
+
+---
+
+## 2. MySQL 설치
+
+### 2.1 다운로드
+
+**공식 홈페이지:** https://mysql.com
+
+**다운로드 링크:** https://dev.mysql.com/downloads/
+
+### 2.2 설치 단계
+
+**1) 설치 타입 선택**
+- Custom 선택
+
+**2) 구성 요소 선택**
+- MySQL Server
+- MySQL Workbench
+
+**3) 환경 설정**
+- Config Type: `Development Computer`
+- Port: `3306` (기본 포트)
+
+**4) 사용자 인증 방식 설정**
+- 기본 설정 사용
+
+**5) 관리자 계정 설정**
+- 계정명: `root`
+- 비밀번호: 직접 설정
+
+**6) 윈도우 서비스 등록**
+- 서비스 이름: `MySQL` (관례적 사용)
+
+**7) 권한 부여**
+- Server File에 대한 권한: `Yes`
+
+---
+
+## 3. MySQL Workbench
+
+### 3.1 워크벤치란?
+
+MySQL 데이터베이스를 시각적으로 쉽게 관리, 설계, 개발할 수 있도록 오라클에서 공식적으로 제공하는 무료 GUI 툴
+
+**특징:**
+- CLI 방식 대신 윈도우 화면으로 직관적인 작업 가능
+- 데이터베이스 클라이언트 프로그램
+
+### 3.2 주요 기능
+
+| 기능 | 설명 |
+|------|------|
+| SQL Editor | SQL 개발 및 실행 |
+| Data Modeling | 데이터베이스 설계 및 모델링 |
+| Administration | 데이터베이스 관리 |
+
+### 3.3 워크벤치 설정
+
+**1) 계정 접속**
+- `root` 계정으로 접속
+
+**2) 환경 설정 (Preferences)**
+
+**General Editors:**
+- ✅ Tab key inserts spaces instead of tabs 체크
+
+**SQL Editor:**
+- ❎ Safe Updates 체크 해제
+  - Primary Key를 사용하지 않아도 UPDATE, DELETE 동작 가능
+
+**Query Editor:**
+- ❎ Enable Code Completion in Editors 체크 해제
+
+**Fonts & Colors:**
+- SQL Editor 폰트 설정
+
+**3) 화면 구성**
+- SQL Additions 탭 제거로 화면 넓게 사용
+
+---
+
+## 4. 핵심 요약
+
+### MySQL 특징
+- 오라클사의 관계형 DBMS
+- 오픈소스 기반
+- Community 버전 무료 사용 가능
+
+### 설치 필수 구성 요소
+- MySQL Server
+- MySQL Workbench
+
+### 기본 설정값
+- 포트: 3306
+- 관리자 계정: root
+- 서비스명: MySQL
+
+### Workbench 설정 팁
+- Safe Updates 해제로 유연한 UPDATE/DELETE 가능
+- 적절한 폰트 설정으로 가독성 향상
