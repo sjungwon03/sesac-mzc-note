@@ -1,0 +1,303 @@
+# DQL 학습 노트
+
+## 1. DQL이란?
+
+**Data Query Language**의 약자로, 데이터베이스에서 데이터를 **조회**하는 역할을 수행하는 SQL 문이다.
+
+**특징:**
+
+- 테이블, 뷰 등의 데이터베이스 객체에서 원하는 행(Row)을 조회
+- 주요 명령어: `SELECT`
+
+---
+
+## 2. SELECT 문 기본 구조
+
+### 2.1 기본 문법
+
+```sql
+SELECT 조회_칼럼
+[FROM 테이블_이름]
+[WHERE 조회_조건]
+[GROUP BY 그룹_칼럼]
+[HAVING 그룹_조건]
+[ORDER BY 정렬_칼럼 정렬방식]
+[LIMIT 숫자, 숫자]
+```
+
+### 2.2 SELECT 문 실행 순서 (중요!)
+
+**작성 순서 ≠ 실행 순서**
+
+```
+① FROM 절      → 조회할 테이블 지정
+② WHERE 절     → 조건에 맞는 행 필터링
+③ GROUP BY 절  → 그룹화
+④ HAVING 절    → 그룹 조건 필터링
+⑤ SELECT 절    → 출력할 칼럼 및 연산 결정
+⑥ ORDER BY 절  → 결과 정렬
+⑦ LIMIT 절     → 출력 행 개수 제한
+```
+
+**핵심 포인트:**
+
+- `SELECT` 절에서 정의한 별명(Alias)은 `ORDER BY` 절에서만 사용 가능
+- MySQL은 예외적으로 `GROUP BY`, `HAVING` 절에서도 별명 사용을 허용
+
+---
+
+## 3. SELECT 절 & FROM 절
+
+### 3.1 SELECT 절 특징
+
+- **생략 불가능**
+- 칼럼 조회 또는 연산/함수 결과 확인 가능
+
+### 3.2 FROM 절 특징
+
+- 조회할 테이블 지정
+- 여러 테이블 동시 조회 가능 (JOIN)
+
+### 3.3 활용 예시
+
+**1) 특정 칼럼만 조회**
+
+```sql
+SELECT code, model FROM tbl_product;
+```
+
+**2) 칼럼 별명 지정 (AS)**
+
+```sql
+SELECT code AS 코드, model AS 모델 FROM tbl_product;
+```
+
+**3) 테이블 별명 지정**
+
+```sql
+SELECT p.code, p.model FROM tbl_product p;
+```
+
+**4) 중복 제거 (DISTINCT)**
+
+```sql
+SELECT DISTINCT category FROM tbl_product;
+```
+
+### 3.4 주의사항
+
+**SELECT \* 사용 금지**
+
+- 성능 저하 유발
+- 테이블 구조 변경 시 에러 발생 가능
+- 실무에서는 필요한 칼럼만 명시적으로 지정
+
+---
+
+## 4. WHERE 절 (조건 필터링)
+
+### 4.1 타입별 작성 방법
+
+| 타입      | 작성 방법                         |
+| --------- | --------------------------------- |
+| 문자/날짜 | 작은따옴표로 묶음 (`'value'`)     |
+| 숫자      | 따옴표 없이 숫자만 작성           |
+| NULL      | `IS NULL` 또는 `IS NOT NULL` 사용 |
+
+### 4.2 주요 연산자
+
+**1) 비교 연산자**
+
+```sql
+SELECT model, price FROM tbl_product WHERE price >= 300;
+```
+
+- `>`, `>=`, `<`, `<=`, `=`, `!=`
+- **주의:** 동등 비교는 `==`가 아닌 `=`
+
+**2) 범위 검색 (BETWEEN)**
+
+```sql
+SELECT model, price FROM tbl_product WHERE price BETWEEN 300 AND 400;
+```
+
+**3) 여러 값 중 하나 (IN)**
+
+```sql
+SELECT code, model FROM tbl_product WHERE code IN ('A1', 'B1', 'C1');
+```
+
+**4) 패턴 매칭 (LIKE)**
+
+```sql
+SELECT code, model FROM tbl_product WHERE code LIKE 'A%';
+```
+
+- `'A%'`: A로 시작
+- `'%A'`: A로 끝남
+- `'%A%'`: A를 포함
+
+---
+
+## 5. GROUP BY 절 & 통계 함수
+
+### 5.1 그룹화 개념
+
+특정 칼럼을 기준으로 행들을 그룹화하여 통계를 계산
+
+### 5.2 문법 규칙
+
+- `GROUP BY`에 명시된 칼럼만 `SELECT` 절에서 단독 조회 가능
+- 다른 칼럼은 **반드시 통계 함수**와 함께 사용
+
+### 5.3 주요 통계 함수
+
+| 함수      | 설명   |
+| --------- | ------ |
+| `SUM()`   | 합계   |
+| `AVG()`   | 평균   |
+| `MAX()`   | 최댓값 |
+| `MIN()`   | 최솟값 |
+| `COUNT()` | 개수   |
+
+### 5.4 활용 예시
+
+**1) 카테고리별 수량 합계**
+
+```sql
+SELECT category, SUM(amount) FROM tbl_product GROUP BY category;
+```
+
+**2) 카테고리별 총 구매금액 합계**
+
+```sql
+SELECT category, SUM(amount * price) FROM tbl_product GROUP BY category;
+```
+
+---
+
+## 6. HAVING 절 (그룹 조건 필터링)
+
+### 6.1 목적
+
+`GROUP BY`로 생성된 그룹을 대상으로 조건 필터링
+
+### 6.2 WHERE vs HAVING
+
+| 구분           | WHERE 절    | HAVING 절   |
+| -------------- | ----------- | ----------- |
+| 필터링 시점    | 그룹화 전   | 그룹화 후   |
+| 대상           | 원래 레코드 | 집계된 결과 |
+| 통계 함수 사용 | 불가능      | 가능        |
+
+**성능 팁:** 두 절 모두 처리 가능한 조건이라면 `WHERE` 절 사용 권장 (데이터 모수를 먼저 줄이는 것이 효율적)
+
+### 6.3 활용 예시
+
+**1) 수량 합계 5 이하인 카테고리만 조회**
+
+```sql
+SELECT category, SUM(amount)
+FROM tbl_product
+GROUP BY category
+HAVING SUM(amount) <= 5;
+```
+
+**2) 제품 수가 2개 이하인 카테고리만 조회**
+
+```sql
+SELECT category, COUNT(*) AS product_count
+FROM tbl_product
+GROUP BY category
+HAVING COUNT(*) <= 2;
+```
+
+---
+
+## 7. ORDER BY 절 (데이터 정렬)
+
+### 7.1 정렬 방식
+
+- **오름차순:** `ASC` (기본값, 생략 가능)
+- **내림차순:** `DESC`
+
+### 7.2 오름차순 정렬 순서
+
+1. 문자: 알파벳 순, 가나다 순
+2. 숫자: 작은 숫자부터
+3. 날짜: 과거부터
+
+### 7.3 활용 예시
+
+**1) 단일 정렬**
+
+```sql
+SELECT * FROM tbl_product ORDER BY amount ASC;
+```
+
+**2) 다중 정렬**
+
+```sql
+-- 1차: 수량 오름차순, 2차: 가격 내림차순
+SELECT * FROM tbl_product ORDER BY amount ASC, price DESC;
+```
+
+---
+
+## 8. LIMIT 절 (출력 개수 제한)
+
+### 8.1 목적
+
+- 출력 행 수 제한
+- 전체 데이터 조회 방지로 부하 감소
+
+### 8.2 문법 형식
+
+**형식 1:** `LIMIT 시작위치, 갯수`
+**형식 2:** `LIMIT 갯수 OFFSET 시작위치`
+
+**주의:** 첫 번째 인덱스는 0부터 시작
+
+- `LIMIT 3` = `LIMIT 0, 3`
+
+### 8.3 활용 예시
+
+**1) 상위 3개 항목 (1페이지)**
+
+```sql
+SELECT code, model, price
+FROM tbl_product
+ORDER BY price DESC
+LIMIT 0, 3;
+```
+
+**2) 4~6번째 항목 (2페이지)**
+
+```sql
+SELECT code, model, price
+FROM tbl_product
+ORDER BY price DESC
+LIMIT 3, 3;
+```
+
+---
+
+## 9. 실전 예제: 페이지네이션 구현
+
+```sql
+-- 페이지당 10개씩 표시, 3페이지 조회
+SELECT *
+FROM products
+ORDER BY created_at DESC
+LIMIT 20, 10;  -- (페이지번호-1) * 페이지당개수
+```
+
+---
+
+## 10. 핵심 요약
+
+1. **실행 순서 이해:** FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT
+2. **별명 사용:** SELECT 절의 별명은 ORDER BY에서만 사용 가능 (MySQL은 예외 허용)
+3. **WHERE vs HAVING:** 그룹화 전 조건은 WHERE, 그룹화 후 조건은 HAVING
+4. **SELECT \* 지양:** 필요한 칼럼만 명시적으로 지정
+5. **LIMIT 활용:** 성능 최적화를 위해 적극 활용
