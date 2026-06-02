@@ -1,126 +1,150 @@
--- 카페 주문 SQL 실습: JOIN, SELF JOIN, 상관 서브쿼리
-DROP DATABASE IF EXISTS cafe_order_db;
-CREATE DATABASE cafe_order_db;
-USE cafe_order_db;
+DROP DATABASE IF EXISTS order_db;
+CREATE DATABASE IF NOT EXISTS order_db;
 
-DROP TABLE IF EXISTS order_drinks;
-DROP TABLE IF EXISTS orders;
-DROP TABLE IF EXISTS drinks;
-DROP TABLE IF EXISTS drink_categories;
+-- 테이블 삭제 (CASCADE: 참조 중인 테이블을 함께 삭제하는 옵션)
+DROP TABLE IF EXISTS tbl_payment_order CASCADE;
+DROP TABLE IF EXISTS tbl_payment CASCADE;
+DROP TABLE IF EXISTS tbl_order_menu CASCADE;
+DROP TABLE IF EXISTS tbl_order CASCADE;
+DROP TABLE IF EXISTS tbl_menu CASCADE;
+DROP TABLE IF EXISTS tbl_category CASCADE;
 
-CREATE TABLE drink_categories (
-    category_id INT NOT NULL AUTO_INCREMENT,
-    category_name VARCHAR(30) NOT NULL,
-    parent_category_id INT,
-    CONSTRAINT pk_drink_categories PRIMARY KEY (category_id),
-    CONSTRAINT fk_category_parent FOREIGN KEY (parent_category_id)
-        REFERENCES drink_categories(category_id)
-) ENGINE=InnoDB COMMENT '음료 카테고리';
+-- 테이블 생성
+CREATE TABLE IF NOT EXISTS tbl_category
+(
+    category_code        INT AUTO_INCREMENT COMMENT '카테고리코드',
+    category_name        VARCHAR(30) NOT NULL COMMENT '카테고리명',
+    ref_category_code    INT COMMENT '상위카테고리코드',
+    CONSTRAINT pk_category_code PRIMARY KEY (category_code),
+    CONSTRAINT fk_ref_category_code FOREIGN KEY (ref_category_code) 
+        REFERENCES tbl_category (category_code)
+) ENGINE=INNODB COMMENT '카테고리';
 
-CREATE TABLE drinks (
-    drink_id INT NOT NULL AUTO_INCREMENT,
-    drink_name VARCHAR(50) NOT NULL,
-    price INT NOT NULL,
-    category_id INT NOT NULL,
-    available_yn CHAR(1) NOT NULL DEFAULT 'Y',
-    CONSTRAINT pk_drinks PRIMARY KEY (drink_id),
-    CONSTRAINT fk_drink_category FOREIGN KEY (category_id)
-        REFERENCES drink_categories(category_id)
-) ENGINE=InnoDB COMMENT '음료';
+CREATE TABLE IF NOT EXISTS tbl_menu
+(
+    menu_code           INT AUTO_INCREMENT COMMENT '메뉴코드',
+    menu_name           VARCHAR(30) NOT NULL COMMENT '메뉴명',
+    menu_price          INT NOT NULL COMMENT '메뉴가격',
+    category_code       INT NOT NULL COMMENT '카테고리코드',
+    orderable_status    CHAR(1) NOT NULL COMMENT '주문가능상태',
+    CONSTRAINT pk_menu_code PRIMARY KEY (menu_code),
+    CONSTRAINT fk_category_code FOREIGN KEY (category_code) 
+        REFERENCES tbl_category (category_code)
+) ENGINE=INNODB COMMENT '메뉴';
 
-CREATE TABLE orders (
-    order_id INT NOT NULL AUTO_INCREMENT,
-    ordered_on DATE NOT NULL,
-    ordered_time TIME NOT NULL,
-    CONSTRAINT pk_orders PRIMARY KEY (order_id)
-) ENGINE=InnoDB COMMENT '주문';
 
-CREATE TABLE order_drinks (
-    order_id INT NOT NULL,
-    drink_id INT NOT NULL,
-    quantity INT NOT NULL,
-    CONSTRAINT pk_order_drinks PRIMARY KEY (order_id, drink_id),
-    CONSTRAINT fk_order_drinks_order FOREIGN KEY (order_id)
-        REFERENCES orders(order_id),
-    CONSTRAINT fk_order_drinks_drink FOREIGN KEY (drink_id)
-        REFERENCES drinks(drink_id)
-) ENGINE=InnoDB COMMENT '주문 음료';
+CREATE TABLE IF NOT EXISTS tbl_order
+(
+    order_code           INT AUTO_INCREMENT COMMENT '주문코드',
+    order_date           VARCHAR(8) NOT NULL COMMENT '주문일자',
+    order_time           VARCHAR(8) NOT NULL COMMENT '주문시간',
+    total_order_price    INT NOT NULL COMMENT '총주문금액',
+    CONSTRAINT pk_order_code PRIMARY KEY (order_code)
+) ENGINE=INNODB COMMENT '주문';
 
-INSERT INTO drink_categories (category_name, parent_category_id) VALUES
-('커피', NULL),
-('논커피', NULL),
-('디저트', NULL),
-('에스프레소', 1),
-('라떼', 1),
-('티', 2),
-('스무디', 2),
-('케이크', 3);
 
-INSERT INTO drinks (drink_name, price, category_id, available_yn) VALUES
-('아메리카노', 3500, 4, 'Y'),
-('카페라떼', 4500, 5, 'Y'),
-('바닐라라떼', 5000, 5, 'Y'),
-('유자차', 4300, 6, 'Y'),
-('딸기스무디', 6200, 7, 'Y'),
-('망고스무디', 6200, 7, 'N'),
-('치즈케이크', 5800, 8, 'Y'),
-('초코케이크', 6100, 8, 'Y');
+CREATE TABLE IF NOT EXISTS tbl_order_menu
+(
+    order_code      INT NOT NULL COMMENT '주문코드',
+    menu_code       INT NOT NULL COMMENT '메뉴코드',
+    order_amount    INT NOT NULL COMMENT '주문수량',
+    CONSTRAINT pk_comp_order_menu_code PRIMARY KEY (order_code, menu_code),
+    CONSTRAINT fk_order_menu_order_code FOREIGN KEY (order_code) 
+        REFERENCES tbl_order (order_code),
+    CONSTRAINT fk_order_menu_menu_code FOREIGN KEY (menu_code) 
+        REFERENCES tbl_menu (menu_code)
+) ENGINE=INNODB COMMENT '주문별메뉴';
 
-INSERT INTO orders (ordered_on, ordered_time) VALUES
-('2026-06-01', '09:15:00'),
-('2026-06-01', '12:20:00'),
-('2026-06-02', '10:05:00'),
-('2026-06-02', '14:40:00');
 
-INSERT INTO order_drinks (order_id, drink_id, quantity) VALUES
-(1, 1, 2),
-(1, 7, 1),
-(2, 2, 1),
-(2, 5, 2),
-(3, 3, 1),
-(3, 8, 1),
-(4, 1, 1),
-(4, 4, 2);
+CREATE TABLE IF NOT EXISTS tbl_payment
+(
+    payment_code    INT AUTO_INCREMENT COMMENT '결제코드',
+    payment_date    VARCHAR(8) NOT NULL COMMENT '결제일',
+    payment_time    VARCHAR(8) NOT NULL COMMENT '결제시간',
+    payment_price   INT NOT NULL COMMENT '결제금액',
+    payment_type    VARCHAR(6) NOT NULL COMMENT '결제구분',
+    CONSTRAINT pk_payment_code PRIMARY KEY (payment_code)
+) ENGINE=INNODB COMMENT '결제';
+
+
+CREATE TABLE IF NOT EXISTS tbl_payment_order
+(
+    order_code      INT NOT NULL COMMENT '주문코드',
+    payment_code    INT NOT NULL COMMENT '결제코드',
+    CONSTRAINT pk_comp_payment_order_code PRIMARY KEY (payment_code, order_code),
+    CONSTRAINT fk_payment_order_order_code FOREIGN KEY (order_code) 
+        REFERENCES tbl_order (order_code),
+    CONSTRAINT fk_payment_order_payment_code FOREIGN KEY (order_code) 
+        REFERENCES tbl_payment (payment_code)
+) ENGINE=INNODB COMMENT '결제별주문';
+
+-- 데이터 삽입
+INSERT INTO tbl_category VALUES (null, '식사', null);
+INSERT INTO tbl_category VALUES (null, '음료', null);
+INSERT INTO tbl_category VALUES (null, '디저트', null);
+INSERT INTO tbl_category VALUES (null, '한식', 1);
+INSERT INTO tbl_category VALUES (null, '중식', 1);
+
+INSERT INTO tbl_category VALUES (null, '일식', 1);
+INSERT INTO tbl_category VALUES (null, '퓨전', 1);
+INSERT INTO tbl_category VALUES (null, '커피', 2);
+INSERT INTO tbl_category VALUES (null, '쥬스', 2);
+INSERT INTO tbl_category VALUES (null, '기타', 2);
+
+INSERT INTO tbl_category VALUES (null, '동양', 3);
+INSERT INTO tbl_category VALUES (null, '서양', 3);
+
+INSERT INTO tbl_menu VALUES (null, '열무김치라떼', 4500, 8, 'Y');
+INSERT INTO tbl_menu VALUES (null, '우럭스무디', 5000, 10, 'Y');
+INSERT INTO tbl_menu VALUES (null, '생갈치쉐이크', 6000, 10, 'Y');
+INSERT INTO tbl_menu VALUES (null, '갈릭미역파르페', 7000, 10, 'Y');
+INSERT INTO tbl_menu VALUES (null, '앙버터김치찜', 13000, 4, 'N');
+
+INSERT INTO tbl_menu VALUES (null, '생마늘샐러드', 12000, 4, 'Y');
+INSERT INTO tbl_menu VALUES (null, '민트미역국', 15000, 4, 'Y');
+INSERT INTO tbl_menu VALUES (null, '한우딸기국밥', 20000, 4, 'Y');
+INSERT INTO tbl_menu VALUES (null, '홍어마카롱', 9000, 12, 'Y');
+INSERT INTO tbl_menu VALUES (null, '코다리마늘빵', 7000, 12, 'N');
+
+INSERT INTO tbl_menu VALUES (null, '정어리빙수', 10000, 10, 'Y');
+INSERT INTO tbl_menu VALUES (null, '날치알스크류바', 2000, 10, 'Y');
+INSERT INTO tbl_menu VALUES (null, '직화구이젤라또', 8000, 12, 'Y');
+INSERT INTO tbl_menu VALUES (null, '과메기커틀릿', 13000, 6, 'Y');
+INSERT INTO tbl_menu VALUES (null, '죽방멸치튀김우동', 11000, 6, 'N');
+
+INSERT INTO tbl_menu VALUES (null, '흑마늘아메리카노', 9000, 8, 'Y');
+INSERT INTO tbl_menu VALUES (null, '아이스가리비관자육수', 6000, 10, 'Y');
+INSERT INTO tbl_menu VALUES (null, '붕어빵초밥', 35000, 6, 'Y');
+INSERT INTO tbl_menu VALUES (null, '까나리코코넛쥬스', 9000, 9, 'Y');
+INSERT INTO tbl_menu VALUES (null, '마라깐쇼한라봉', 22000, 5, 'N');
+
+INSERT INTO tbl_menu VALUES (null, '돌미나리백설기', 5000, 11, 'Y');
 
 COMMIT;
 
--- 1. 음료명, 가격, 하위 카테고리명을 조회하시오.
-SELECT d.drink_name, d.price, c.category_name
-FROM drinks d
-INNER JOIN drink_categories c
-        ON d.category_id = c.category_id;
+-- 조인 및 서브쿼리 문제
 
--- 2. 카테고리명과 상위 카테고리명을 조회하시오.
-SELECT child.category_name AS category_name,
-       parent.category_name AS parent_category_name
-FROM drink_categories child
-LEFT JOIN drink_categories parent
-       ON child.parent_category_id = parent.category_id;
+-- 1. 메뉴코드, 메뉴명, 가격, 카테고리이름, 주문가능여부 조회하기
+SELECT m.menu_code, m.menu_name, m.menu_price, c.category_name, m.orderable_status
+  FROM tbl_category c INNER JOIN tbl_menu m
+    ON c.category_code = m.category_code;
 
--- 3. 주문번호, 주문일자, 음료명, 수량, 주문금액을 조회하시오.
-SELECT o.order_id,
-       o.ordered_on,
-       d.drink_name,
-       od.quantity,
-       d.price * od.quantity AS order_amount
-FROM orders o
-INNER JOIN order_drinks od
-        ON o.order_id = od.order_id
-INNER JOIN drinks d
-        ON d.drink_id = od.drink_id;
+-- 2. 메뉴이름, 모든 카테고리이름 조회하기
+SELECT m.menu_name, c.category_name
+  FROM tbl_category c LEFT OUTER JOIN tbl_menu m
+    ON c.category_code = m.category_code;
 
--- 4. 판매된 적이 없는 음료를 조회하시오.
-SELECT d.drink_id, d.drink_name
-FROM drinks d
-LEFT JOIN order_drinks od
-       ON d.drink_id = od.drink_id
-WHERE od.order_id IS NULL;
+-- 3. 카테고리이름, 상위카테고리이름 조회하기
+SELECT a.category_name AS 카테고리
+     , b.category_name AS 상위카테고리
+  FROM tbl_category a INNER JOIN tbl_category b
+    ON a.ref_category_code = b.category_code
+ WHERE a.ref_category_code IS NOT NULL;
 
--- 5. 각 음료가 속한 카테고리 평균 가격보다 비싼 음료를 조회하시오.
-SELECT d.drink_id, d.drink_name, d.price, d.category_id
-FROM drinks d
-WHERE d.price > (
-    SELECT AVG(d2.price)
-    FROM drinks d2
-    WHERE d2.category_id = d.category_id
-);
+-- 4. 메뉴가격이 카테고리별 평균 메뉴가격보다 높은 메뉴 조회하기
+--    메인 쿼리가 서브 쿼리에 영향을 미치는 상관 서브쿼리 형식
+SELECT menu_code, menu_name, menu_price, category_code, orderable_status
+  FROM tbl_menu m
+ WHERE menu_price > (SELECT AVG(menu_price)
+                       FROM tbl_menu
+                      WHERE category_code = m.category_code);

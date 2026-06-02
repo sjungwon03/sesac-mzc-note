@@ -1,43 +1,57 @@
--- JOIN 및 서브쿼리 기본 예제
-USE training_db;
+USE company_db;
 
--- 내부 조인: 수강생이 등록된 과정 정보 함께 조회
-SELECT l.learner_id, l.learner_name, c.course_name, c.category
-FROM learners l
-INNER JOIN courses c
-        ON l.course_id = c.course_id;
+-- 내부 조인: 두 테이블에 모두 존재하는 것만 조회
 
--- 특정 카테고리 과정의 수강생 조회
-SELECT l.learner_name, c.course_name, l.score
-FROM courses c
-INNER JOIN learners l
-        ON c.course_id = l.course_id
-WHERE c.category = 'Programming';
+-- 사원아이디, 사원명, 부서명 조회하기
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM departments d
+INNER JOIN employees e
+ON d.dept_id = e.dept_id;
 
--- 카테고리별 수강생 수
-SELECT c.category, COUNT(l.learner_id) AS learner_count
-FROM courses c
-INNER JOIN learners l
-        ON c.course_id = l.course_id
-GROUP BY c.category;
+-- '대구'에 근무하는 사원 조회하기
+SELECT e.emp_id, e.dept_id, e.emp_name, e.position, e.gender, e.hire_date, e.salary, d.location
+  FROM departments d INNER JOIN employees e
+    ON d.dept_id = e.dept_id
+ WHERE d.location = '대구';
 
--- 외부 조인: 수강생이 없어도 모든 과정 조회
-SELECT c.course_id, c.course_name, COUNT(l.learner_id) AS learner_count
-FROM courses c
-LEFT OUTER JOIN learners l
-             ON c.course_id = l.course_id
-GROUP BY c.course_id, c.course_name;
+-- 지역별로 근무 중인 사원 수 조회하기
+SELECT d.location AS 지역
+     , COUNT(*)   AS "사원 수"
+  FROM departments d INNER JOIN employees e
+    ON d.dept_id = e.dept_id
+ GROUP BY d.location;
 
--- 단일 행 서브쿼리: 전체 평균보다 높은 점수 조회
-SELECT learner_name, score
-FROM learners
-WHERE score > (SELECT AVG(score) FROM learners);
 
--- 다중 행 서브쿼리: Database 카테고리 과정의 수강생 조회
-SELECT learner_name, course_id, score
-FROM learners
-WHERE course_id IN (
-    SELECT course_id
-    FROM courses
-    WHERE category = 'Database'
-);
+-- 외부 조인: 두 테이블 중 한 곳에만 있는 데이터도 함께 조회하기
+
+-- 사원아이디, 사원명, 부서명 조회하기(근무 중인 사원이 없는 부서도 함께 조회하기)
+SELECT e.emp_id, e.emp_name, d.dept_name
+FROM departments d
+LEFT OUTER JOIN employees e
+ON d.dept_id = e.dept_id;
+
+-- 부서별 사원 수 조회하기 (근무 중인 사원이 없으면 0으로 조회하기)
+SELECT d.dept_name, COUNT(emp_id)
+FROM departments d LEFT OUTER JOIN employees e
+ON d.dept_id = e.dept_id
+GROUP BY d.dept_id, d.dept_name;
+
+
+-- 서브 쿼리
+
+-- 중첩 서브쿼리(결과가 1개인 단일 행 서브쿼리)
+SELECT * 
+FROM employees 
+WHERE salary > (SELECT AVG(salary) 
+                FROM employees);
+
+-- 중첩 서브쿼리(결과가 2개 이상인 다중 행 서브쿼리)
+-- SELECT *
+-- FROM employees
+-- WHERE dept_id = ('영업부'의 dept_id 조회);
+
+SELECT *
+FROM employees
+WHERE dept_id IN (SELECT dept_id
+                  FROM departments
+                  WHERE dept_name = '영업부');

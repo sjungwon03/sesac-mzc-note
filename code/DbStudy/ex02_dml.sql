@@ -1,22 +1,17 @@
--- DML 기본 예제: INSERT, UPDATE, DELETE
-USE academy_db;
+USE member_db;
 
--- INSERT: 학습자와 출석 기록 추가
-INSERT INTO students (student_name, track_name, email, joined_at)
-VALUES ('김하늘', 'Backend', 'sky@example.com', '2026-03-02');
+-- INSERT
+INSERT INTO members (mem_id, mem_name, mem_number, addr, phone1, phone2, height, debut_date)
+VALUES ('12345678', '홍길동', 1, 'KR', '010', '44445555', 100, NOW());
 
-INSERT INTO attendance_logs (student_id, attended_on, status)
-VALUES (1, '2026-03-03', '출석');
+INSERT INTO visit_history (mem_id, visited_at)
+VALUES ('12345678', NOW());
 
--- UPDATE: 기본 정보 변경
-UPDATE students
-   SET track_name = 'Cloud Backend'
- WHERE student_id = 1;
+-- UPDATE
+UPDATE members
+SET mem_name = '김철수'
+WHERE mem_id = '12345678';  -- 조건은 PK를 사용할 것
 
--- DELETE: 출석 기록 삭제 후 학습자 비활성화
-DELETE FROM attendance_logs
- WHERE log_id = 1;
-
-UPDATE students
-   SET active_yn = 'N'
- WHERE student_id = 1;
+-- DELETE
+DELETE FROM members
+WHERE mem_id = '12345678';

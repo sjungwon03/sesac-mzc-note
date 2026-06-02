@@ -1,85 +1,144 @@
--- DQL 기본 예제: 교육 운영 데이터 조회
-DROP DATABASE IF EXISTS training_db;
-CREATE DATABASE training_db;
-USE training_db;
+DROP DATABASE IF EXISTS company_db;
+CREATE DATABASE IF NOT EXISTS company_db;
 
-DROP TABLE IF EXISTS learners;
-DROP TABLE IF EXISTS courses;
+USE company_db;
 
-CREATE TABLE courses (
-    course_id INT NOT NULL AUTO_INCREMENT,
-    course_name VARCHAR(50) NOT NULL,
-    category VARCHAR(20) NOT NULL,
-    hours INT NOT NULL,
-    CONSTRAINT pk_courses PRIMARY KEY (course_id)
-) ENGINE=InnoDB COMMENT '과정';
+DROP TABLE IF EXISTS employees;
+DROP TABLE IF EXISTS departments;
 
-CREATE TABLE learners (
-    learner_id INT NOT NULL AUTO_INCREMENT,
-    course_id INT,
-    learner_name VARCHAR(30) NOT NULL,
-    level_name VARCHAR(20),
-    registered_at DATE,
-    score INT,
-    CONSTRAINT pk_learners PRIMARY KEY (learner_id),
-    CONSTRAINT fk_learners_course FOREIGN KEY (course_id)
-        REFERENCES courses(course_id)
-) ENGINE=InnoDB COMMENT '수강생';
+CREATE TABLE IF NOT EXISTS departments
+(
+    dept_id     INT NOT NULL AUTO_INCREMENT COMMENT '부서아이디',
+    dept_name   VARCHAR(30) COMMENT '부서명',
+    location    VARCHAR(50) COMMENT '위치',
+    CONSTRAINT pk_dept PRIMARY KEY(dept_id)
+) ENGINE=InnoDB COMMENT '부서';
 
-INSERT INTO courses (course_name, category, hours) VALUES
-('Java 기초', 'Programming', 60),
-('MySQL 활용', 'Database', 40),
-('AWS 입문', 'Cloud', 30),
-('Spring Boot', 'Programming', 60);
+CREATE TABLE IF NOT EXISTS employees
+(
+    emp_id      INT NOT NULL AUTO_INCREMENT COMMENT '사원아이디',
+    dept_id     INT COMMENT '부서아이디',
+    emp_name    VARCHAR(15) COMMENT '사원명',
+    position    CHAR(10) COMMENT '직급',
+    gender      CHAR(1) COMMENT '성별',
+    hire_date   DATE COMMENT '입사일자',
+    salary      INT COMMENT '연봉',
+    CONSTRAINT pk_emp PRIMARY KEY(emp_id),
+    CONSTRAINT fk_dept_emp FOREIGN KEY(dept_id) 
+      REFERENCES departments(dept_id)
+) ENGINE=InnoDB COMMENT '사원';
 
-INSERT INTO learners (course_id, learner_name, level_name, registered_at, score) VALUES
-(1, '이서준', 'beginner', '2026-03-01', 85),
-(1, '박지민', 'beginner', '2026-03-02', 72),
-(2, '최유진', 'intermediate', '2026-03-04', 91),
-(2, '정도윤', 'beginner', '2026-03-05', 66),
-(3, '한서아', 'intermediate', '2026-03-07', 88),
-(4, '오민재', 'advanced', '2026-03-10', 95);
+ALTER TABLE employees AUTO_INCREMENT = 1001;
 
--- SELECT 절만 사용해 계산 또는 함수 결과 확인
-SELECT 10 + 20 AS result;
-SELECT NOW() AS current_time;
+INSERT INTO departments(dept_name, location) VALUES ('영업부', '대구');
+INSERT INTO departments(dept_name, location) VALUES ('인사부', '서울');
+INSERT INTO departments(dept_name, location) VALUES ('총무부', '대구');
+INSERT INTO departments(dept_name, location) VALUES ('기획부', '서울');
 
--- 필요한 칼럼만 조회하고 별명 지정
-SELECT learner_id AS 번호, learner_name AS 이름, score AS 점수
-FROM learners;
+INSERT INTO employees VALUES (NULL, 1, '구창민', '과장', 'M', '95-05-01', 5000000);
+INSERT INTO employees VALUES (NULL, 1, '김민서', '사원', 'M', '17-09-01', 2500000);
+INSERT INTO employees VALUES (NULL, 2, '이은영', '부장', 'F', '90-09-01', 5500000);
+INSERT INTO employees VALUES (NULL, 2, '한성일', '과장', 'M', '93-04-01', 5000000);
 
--- 조건 필터링
-SELECT learner_name, score
-FROM learners
-WHERE score >= 80;
+-- SELECT 절만 필수
+SELECT 1 + 1;
+SELECT NOW();
 
--- 범위 조건
-SELECT learner_name, registered_at
-FROM learners
-WHERE registered_at BETWEEN '2026-03-01' AND '2026-03-05';
+-- 칼럼 별명 (Alias)
+SELECT NOW() AS 지금;
 
--- 여러 값 중 하나와 패턴 검색
-SELECT learner_name, level_name
-FROM learners
-WHERE level_name IN ('intermediate', 'advanced');
+-- FROM 절: 테이블 조회
+SELECT * FROM members;  -- *는 실무 사용 금지
 
-SELECT learner_name
-FROM learners
-WHERE learner_name LIKE '박%';
+-- 테이블 별명 (주로 조인/서브쿼리에서 필요)
+SELECT m.mem_id, m.mem_name
+FROM members m;
 
--- 그룹화와 집계
-SELECT course_id, COUNT(*) AS learner_count, AVG(score) AS avg_score
-FROM learners
-GROUP BY course_id;
+-- 중복 제거
+SELECT DISTINCT addr FROM members;
 
--- 그룹 조건
-SELECT course_id, AVG(score) AS avg_score
-FROM learners
-GROUP BY course_id
-HAVING avg_score >= 80;
+-- WHERE 절: 조건 작성
+SELECT mem_id, mem_name
+FROM members
+WHERE mem_id = '12345678';
 
--- 정렬과 행 제한
-SELECT learner_name, score
-FROM learners
-ORDER BY score DESC
-LIMIT 3;
+SELECT mem_id, mem_name
+FROM members
+WHERE mem_name = '홍길동';
+
+-- WHERE 절 실습
+
+-- 대구에 있는 부서 조회하기
+SELECT dept_id, dept_name, location
+  FROM departments
+ WHERE location = '대구';
+ 
+-- 부서번호가 1이고, 급여가 3000000 이상인 사원 조회하기
+SELECT emp_id, dept_id, emp_name, position, gender, hire_date, salary
+  FROM employees
+ WHERE dept_id = 1 AND salary >= 3000000;
+
+SELECT emp_id, dept_id, emp_name, position, gender, hire_date, salary
+  FROM employees
+ WHERE salary >= 3000000 AND dept_id = 1;
+ 
+-- 급여가 3000000 ~ 5000000 사이인 사원 조회하기
+SELECT emp_id, dept_id, emp_name, position, gender, hire_date, salary
+  FROM employees
+ WHERE salary BETWEEN 3000000 AND 5000000;
+
+-- 직급이 '과장', '부장'인 사원 조회하기
+SELECT emp_id, dept_id, emp_name, position, gender, hire_date, salary
+  FROM employees
+ WHERE position IN ('과장', '부장');
+
+-- 직급이 '과장', '부장'이 아닌 사원 조회하기
+SELECT emp_id, dept_id, emp_name, position, gender, hire_date, salary
+  FROM employees
+ WHERE position NOT IN ('과장', '부장');
+
+-- 이름이 '한'으로 시작하는 사원 조회하기
+SELECT emp_id, dept_id, emp_name, position, gender, hire_date, salary
+  FROM employees
+ WHERE emp_name LIKE '한%';
+
+SELECT emp_id, dept_id, emp_name, position, gender, hire_date, salary
+  FROM employees
+ WHERE emp_name LIKE CONCAT('한', '%');
+
+-- GROUP BY 절 / HAVING 절
+
+-- 직급별 급여 평균 조회하기
+SELECT position, AVG(salary)
+FROM employees
+GROUP BY position;
+
+-- 부서별 사원 수 조회하기
+SELECT dept_id, COUNT(*)  -- 모든 칼럼 중 어느 한 칼럼이라도 값을 가지고 있으면 갯수에 포함
+FROM employees
+GROUP BY dept_id;
+
+-- 직급이 '과장'인 사원 수 조회하기
+SELECT position, COUNT(*)
+FROM employees
+WHERE position = '과장'
+GROUP BY position;
+
+-- 급여 평균이 5000000 이상인 직급과 급여 평균 조회하기
+SELECT position, AVG(salary) AS salary_avg
+FROM employees
+GROUP BY position
+HAVING salary_avg >= 5000000;  -- MySQL은 예외적으로 SELECT 절의 별명 사용 가능
+
+-- ORDER BY 절 / LIMIT 절
+
+-- 높은 급여 순
+SELECT emp_id, dept_id, emp_name, position, gender, hire_date, salary
+FROM employees
+ORDER BY salary DESC;
+
+-- 가장 급여가 높은 사원
+SELECT emp_id, dept_id, emp_name, position, gender, hire_date, salary
+FROM employees
+ORDER BY salary DESC
+LIMIT 0, 1;
