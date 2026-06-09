@@ -61,6 +61,8 @@ AWS와 AI를 활용해 MSA 기반 웹 서비스를 개발하는 훈련 과정의
 - [5. Spring MVC](spring/05.SpringMVC.md)
 - [6. 요청과 응답 처리](spring/06.요청과응답처리.md)
 - [7. AOP](spring/07.aop.md)
+- [8. RESTful API](spring/08.restful_api.md)
+- [9. Validation과 예외 처리](spring/09.validation_exception.md)
 
 ### MySQL
 
